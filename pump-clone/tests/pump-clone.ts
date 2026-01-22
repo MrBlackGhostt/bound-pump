@@ -3,6 +3,8 @@ import { Program } from "@coral-xyz/anchor";
 import { PumpClone } from "../target/types/pump_clone";
 import { assert } from "chai";
 import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 describe("pump-clone", () => {
   // Configure the client to use the local cluster.
@@ -74,5 +76,79 @@ describe("pump-clone", () => {
 
     // Correct assertion: Check if the stored owner key equals the creator's key
     assert.ok(account.owner.equals(creator.publicKey));
+  });
+
+  it("buy", async () => {
+    let amount = new anchor.BN(4);
+    const user_token_account = getAssociatedTokenAddressSync(
+      mintPdaPubkey,
+      user.publicKey
+    );
+
+    const curveAta = getAssociatedTokenAddressSync(
+      mintPdaPubkey,
+      curveConfigPdaPubkey,
+      true
+    );
+    const tx = await program.methods
+      .buyToken(amount)
+      .accountsPartial({
+        curveConfig: curveConfigPdaPubkey,
+        mint: mintPdaPubkey,
+        curveAta: curveAta,
+        userAta: user_token_account,
+        mintCreator: creator.publicKey,
+        user: user.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([user])
+      .rpc();
+    console.log("Your transaction signature", tx);
+    await provider.connection.confirmTransaction(tx);
+
+    const user_ata_balance = await provider.connection.getTokenAccountBalance(
+      user_token_account
+    );
+    console.log("user ata balance", user_ata_balance);
+    assert.isAbove(Number(user_ata_balance.value.amount), 0);
+  });
+
+  it("sell", async () => {
+    const user_token_account = getAssociatedTokenAddressSync(
+      mintPdaPubkey,
+      user.publicKey
+    );
+    let balanceBefore = await provider.connection.getTokenAccountBalance(
+      user_token_account
+    );
+
+    const sellAmount = new anchor.BN(balanceBefore.value.amount);
+
+    const curveAta = getAssociatedTokenAddressSync(
+      mintPdaPubkey,
+      curveConfigPdaPubkey,
+      true
+    );
+    const tx = await program.methods
+      .sellToken(sellAmount)
+      .accountsPartial({
+        curveConfig: curveConfigPdaPubkey,
+        mint: mintPdaPubkey,
+        curveAta: curveAta,
+        userAta: user_token_account,
+        mintCreator: creator.publicKey,
+        user: user.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([user])
+      .rpc();
+    console.log("Your Sell transaction signature", tx);
+    await provider.connection.confirmTransaction(tx);
+
+    const user_ata_balance = await provider.connection.getTokenAccountBalance(
+      user_token_account
+    );
+    console.log("user ata balance on sell", user_ata_balance);
+    assert.equal(Number(user_ata_balance.value.amount), 0);
   });
 });

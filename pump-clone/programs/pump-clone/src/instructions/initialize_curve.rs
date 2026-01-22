@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
+    token_interface::{self, Mint, MintTo, TokenAccount, TokenInterface},
 };
 
 use crate::states::CurveConfiguration;
@@ -20,6 +20,24 @@ pub fn initialize_curve(ctx: Context<Initialize>) -> Result<()> {
     curve_config.real_token_reserve = 1_000_000_000 * 1_000_000;
     // 0 Real SOL initially
     curve_config.real_sol_reserve = 0;
+
+   
+let signer_seeds = &[
+    b"bonding-pump",
+    ctx.accounts.signer.key.as_ref(),
+    &[ctx.bumps.curve_config]
+];
+let signer = &[&signer_seeds[..]];
+let cpi_ctx = CpiContext::new_with_signer(
+    ctx.accounts.token_program.to_account_info(),
+    MintTo {
+        mint: ctx.accounts.token_mint.to_account_info(),
+        to: ctx.accounts.curve_ata.to_account_info(),
+        authority: curve_config.to_account_info(), // Must match mint authority
+    },
+    signer // Add the seeds here!
+);
+token_interface::mint_to(cpi_ctx, curve_config.real_token_reserve)?;
 
     Ok(())
 }

@@ -34,18 +34,18 @@ pub user_ata: InterfaceAccount<'info, TokenAccount>  ,
 
 impl <'info>BuyToken<'info> {
       pub  fn buy_token (&mut self, amount_in:u64, bump:u8)-> Result<()>{
-        let old_sol_reserve = self.curve_config.virtual_sol_reserve;
-    let new_sol_reserves = old_sol_reserve + amount_in;
-                            let old_virtual_token = self.curve_config.virtual_token_reserve;
+        let old_sol_reserve = self.curve_config.virtual_sol_reserve as u128;
+    let new_sol_reserves = old_sol_reserve + amount_in as u128;
+    let old_virtual_token = self.curve_config.virtual_token_reserve as u128;
         
     let product = old_sol_reserve * old_virtual_token;
 
-    let new_token_reserve = product/new_sol_reserves  + 1; 
+    let new_token_reserve = (product/new_sol_reserves) as u64 + 1; 
 
-    let token_out = old_virtual_token - new_token_reserve;
+    let token_out = old_virtual_token as u64 - new_token_reserve;
          
-        self.curve_config.virtual_sol_reserve = new_sol_reserves;
-        self.curve_config.virtual_token_reserve = new_token_reserve;
+        self.curve_config.virtual_sol_reserve = new_sol_reserves as u64;
+        self.curve_config.virtual_token_reserve = new_token_reserve as u64;
         self.curve_config.real_token_reserve = self.curve_config.real_token_reserve - token_out;
         self.curve_config.real_sol_reserve += amount_in;
 

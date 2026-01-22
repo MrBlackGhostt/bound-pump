@@ -43,21 +43,21 @@ pub struct Sell<'info> {
 impl <'info> Sell<'info>{
 
    pub fn sell(&mut self, token_in:u64, bump:u8)-> Result<()>{
-    let old_sol_res = self.curve_config.virtual_sol_reserve;
-    let old_token_res= self.curve_config.virtual_token_reserve; // this is used to calculate
+    let old_sol_res = self.curve_config.virtual_sol_reserve as u128;
+    let old_token_res= self.curve_config.virtual_token_reserve as u128; // this is used to calculate
         // the amount of token to give or take 
         // the amount of 
 
-let product = old_token_res * old_sol_res;
+let product = old_token_res * old_sol_res ;
     
-    let new_token_rev = self.curve_config.virtual_token_reserve + token_in;
-    let new_sol_out = product/new_token_rev;
+    let new_token_rev = (self.curve_config.virtual_token_reserve + token_in) as u128 ;
+    let new_sol_out = (product/new_token_rev) as u64;
     
         // sol to transfer to the user 
-    let sol_out = old_sol_res - new_sol_out;
+    let sol_out = (old_sol_res as u64 - new_sol_out) as u64;
     //
       
-    self.curve_config.virtual_token_reserve = new_token_rev;
+    self.curve_config.virtual_token_reserve = new_token_rev as u64;
     self.curve_config.virtual_sol_reserve = new_sol_out ;
     self.curve_config.real_sol_reserve -= sol_out;    
     self.curve_config.real_token_reserve += token_in;
@@ -78,15 +78,9 @@ let decimals = self.mint.decimals;
 
     token_interface::transfer_checked(ctx , token_in, decimals)?;
 
- let sol_transfeir_account = Transfer{
-            from: self.curve_config.to_account_info(),
-        to: self.user.to_account_info()
-    
-        }                        ;
-        let sol_transfer_ctx = CpiContext::new(self.system_program.to_account_info(), sol_transfeir_account).with_signer(signer_seeds);
-         transfer(sol_transfer_ctx,sol_out)?;
 
-
+self.curve_config.sub_lamports(sol_out)?;
+        self.user.add_lamports(sol_out)?;
         Ok(())
     }
 }
