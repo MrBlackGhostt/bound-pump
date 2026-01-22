@@ -15,7 +15,7 @@ pub fn sell(ctx: Context<Sell>, amount: u64) -> Result<()> {
 pub struct Sell<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-
+///CHECK: mint_creator in sell 
     pub mint_creator: UncheckedAccount<'info>,
 
     #[account(mut, seeds=[b"bonding-pump", mint_creator.key().as_ref()] ,bump ) ]

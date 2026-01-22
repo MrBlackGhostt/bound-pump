@@ -9,7 +9,7 @@ use crate::states::CurveConfiguration;
 pub struct BuyToken<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-
+/// CHECK: mint_creator in the buy
     pub mint_creator: UncheckedAccount<'info>,
     #[account(mut, seeds=[b"bonding-pump", mint_creator.key().as_ref()] ,bump ) ]
     pub curve_config: Account<'info, CurveConfiguration>,
