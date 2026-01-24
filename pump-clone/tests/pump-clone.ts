@@ -3,8 +3,10 @@ import { Program } from "@coral-xyz/anchor";
 import { PumpClone } from "../target/types/pump_clone";
 import { assert } from "chai";
 import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
-import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import {
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddressSync,
+} from "@solana/spl-token";
 
 describe("pump-clone", () => {
   // Configure the client to use the local cluster.
@@ -15,9 +17,11 @@ describe("pump-clone", () => {
 
   let creator = new anchor.web3.Keypair();
   let user = new anchor.web3.Keypair();
-  
+
   // Hardcoded admin pubkey (matches ADMIN_PUBKEY constant in buy.rs)
-  const adminPubkey = new anchor.web3.PublicKey("Ex4xuNjnbmL7sbaM18WrgAMEv3LqurNQ379bUpWS4Xj3");
+  const adminPubkey = new anchor.web3.PublicKey(
+    "Ex4xuNjnbmL7sbaM18WrgAMEv3LqurNQ379bUpWS4Xj3"
+  );
   let curveSeed = [Buffer.from("bonding-pump"), creator.publicKey.toBuffer()];
   let mintSeed = [
     Buffer.from("bonding-pump-mint"),
@@ -49,6 +53,10 @@ describe("pump-clone", () => {
     user.publicKey
   );
 
+  const creator_token_account = getAssociatedTokenAddressSync(
+    mintPdaPubkey,
+    creator.publicKey
+  );
   const curveAta = getAssociatedTokenAddressSync(
     mintPdaPubkey,
     curveConfigPdaPubkey,
@@ -67,12 +75,12 @@ describe("pump-clone", () => {
       anchor.web3.SystemProgram.transfer({
         fromPubkey: provider.wallet.publicKey,
         toPubkey: user.publicKey,
-        lamports: 5 * anchor.web3.LAMPORTS_PER_SOL,
+        lamports: 100 * anchor.web3.LAMPORTS_PER_SOL,
       }),
       anchor.web3.SystemProgram.transfer({
         fromPubkey: provider.wallet.publicKey,
         toPubkey: adminPubkey,
-        lamports: 5 * anchor.web3.LAMPORTS_PER_SOL,
+        lamports: 500 * anchor.web3.LAMPORTS_PER_SOL,
       })
     );
 
@@ -155,9 +163,7 @@ describe("pump-clone", () => {
   it("verify admin receives fee", async () => {
     let amount_in = new anchor.BN(100);
 
-    let admin_bal_before = await provider.connection.getBalance(
-      adminPubkey
-    );
+    let admin_bal_before = await provider.connection.getBalance(adminPubkey);
 
     console.log("admin key", adminPubkey.toBase58());
     console.log(
@@ -239,7 +245,91 @@ describe("pump-clone", () => {
     const user_ata_balance = await provider.connection.getTokenAccountBalance(
       user_token_account
     );
-    console.log("user ata balance on sell", user_ata_balance);
+    console.log("use bal after", user_ata_balance.value.amount);
     assert.equal(Number(user_ata_balance.value.amount), 0);
+  });
+
+  it("graduate curve by buying 90 SOL", async () => {
+    const bigAmount = new anchor.BN(90 * anchor.web3.LAMPORTS_PER_SOL);
+
+    const user_token_account = getAssociatedTokenAddressSync(
+      mintPdaPubkey,
+      user.publicKey
+    );
+
+    const curveAta = getAssociatedTokenAddressSync(
+      mintPdaPubkey,
+      curveConfigPdaPubkey,
+      true
+    );
+
+    const tx = await program.methods
+      .buyToken(bigAmount)
+      .accountsPartial({
+        curveConfig: curveConfigPdaPubkey,
+        mint: mintPdaPubkey,
+        curveAta: curveAta,
+        userAta: user_token_account,
+        mintCreator: creator.publicKey,
+        user: user.publicKey,
+        admin: adminPubkey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([user])
+      .rpc();
+
+    await provider.connection.confirmTransaction(tx);
+
+    const curveState = await program.account.curveConfiguration.fetch(
+      curveConfigPdaPubkey
+    );
+    assert.isTrue(curveState.isGraduated, "Curve should be graduated");
+    console.log("🎓 Curve graduated successfully!");
+  });
+
+  it("withdraw", async () => {
+    // Create creator's ATA if it doesn't exist
+    const { createAssociatedTokenAccountInstruction } = await import(
+      "@solana/spl-token"
+    );
+
+    const createAtaIx = createAssociatedTokenAccountInstruction(
+      creator.publicKey, // payer
+      creator_token_account, // ata
+      creator.publicKey, // owner
+      mintPdaPubkey // mint
+    );
+
+    try {
+      const tx = new anchor.web3.Transaction().add(createAtaIx);
+      await provider.sendAndConfirm(tx, [creator]);
+      console.log("Created creator ATA");
+    } catch (err) {
+      console.log("ATA already exists, continuing...");
+    }
+
+    const curve_token = await provider.connection.getTokenAccountBalance(
+      curveAta
+    );
+    console.log("curveal before", curve_token.value.amount);
+    const tx = await program.methods
+      .withdraw()
+      .accountsPartial({
+        mintCreator: creator.publicKey,
+        curveConfig: curveConfigPdaPubkey,
+        mint: mintPdaPubkey,
+        mintCreatorAta: creator_token_account,
+        curveAta: curveAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([creator])
+      .rpc();
+    await provider.connection.confirmTransaction(tx);
+
+    const curve_token_after = await provider.connection.getTokenAccountBalance(
+      curveAta
+    );
+
+    assert.equal(Number(curve_token_after.value.amount), 0);
   });
 });
