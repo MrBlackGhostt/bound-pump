@@ -84,7 +84,10 @@ export default function TokenDetailPage() {
 
         // Fetch curve state from blockchain
         const curveConfigPda = new PublicKey(tokenData.curveConfigAddress);
-        const curveAccount = await program.account.curveConfiguration.fetch(
+        
+        // Fetch account using account client
+        const accountClient = program.account as any;
+        const curveAccount = await accountClient.curveConfiguration.fetch(
           curveConfigPda
         );
 
