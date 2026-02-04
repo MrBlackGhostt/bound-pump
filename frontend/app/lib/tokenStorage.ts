@@ -7,8 +7,17 @@ export const tokenStorage = {
   saveToken: (token: TokenData): void => {
     try {
       const tokens = tokenStorage.getAllTokens();
+      
+      // Check if token already exists (by mint address)
+      const exists = tokens.find(t => t.mintAddress === token.mintAddress);
+      if (exists) {
+        console.log("Token already exists in storage:", token.mintAddress);
+        return;
+      }
+      
       tokens.push(token);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+      console.log("Token saved to localStorage:", token.name);
     } catch (error) {
       console.error("Failed to save token:", error);
     }
@@ -35,6 +44,12 @@ export const tokenStorage = {
   getTokenByMint: (mintAddress: string): TokenData | null => {
     const allTokens = tokenStorage.getAllTokens();
     return allTokens.find((token) => token.mintAddress === mintAddress) || null;
+  },
+
+  // Check if a token with this name exists for a creator
+  tokenNameExists: (creator: string, name: string): TokenData | null => {
+    const creatorTokens = tokenStorage.getTokensByCreator(creator);
+    return creatorTokens.find((token) => token.name === name) || null;
   },
 
   // Clear all tokens (for testing)

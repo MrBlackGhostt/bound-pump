@@ -15,13 +15,17 @@ export default function TokensPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
+  const loadTokens = () => {
     const allTokens = tokenStorage.getAllTokens();
     // Sort by creation date (newest first)
     const sorted = allTokens.sort((a, b) => b.createdAt - a.createdAt);
     setTokens(sorted);
     setFilteredTokens(sorted);
     setLoading(false);
+  };
+
+  useEffect(() => {
+    loadTokens();
   }, []);
 
   useEffect(() => {
@@ -68,12 +72,21 @@ export default function TokensPage() {
                 Explore {tokens.length} tokens on the platform
               </p>
             </div>
-            <Button
-              asChild
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              <Link href="/token-form">Launch Token</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={loadTokens}
+                className="flex items-center gap-2"
+              >
+                🔄 Refresh
+              </Button>
+              <Button
+                asChild
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                <Link href="/token-form">Launch Token</Link>
+              </Button>
+            </div>
           </div>
 
           {/* Search Bar */}

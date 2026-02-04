@@ -14,7 +14,7 @@ export default function MyTokensPage() {
   const [tokens, setTokens] = useState<TokenData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadMyTokens = () => {
     if (wallet.publicKey) {
       const myTokens = tokenStorage.getTokensByCreator(wallet.publicKey.toBase58());
       setTokens(myTokens);
@@ -23,6 +23,10 @@ export default function MyTokensPage() {
       setTokens([]);
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadMyTokens();
   }, [wallet.publicKey]);
 
   if (!wallet.connected) {
@@ -68,12 +72,21 @@ export default function MyTokensPage() {
               Tokens you've created ({tokens.length})
             </p>
           </div>
-          <Button
-            asChild
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            <Link href="/token-form">Create New Token</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={loadMyTokens}
+              className="flex items-center gap-2"
+            >
+              🔄 Refresh
+            </Button>
+            <Button
+              asChild
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              <Link href="/token-form">Create New Token</Link>
+            </Button>
+          </div>
         </div>
 
         {/* Token Grid */}

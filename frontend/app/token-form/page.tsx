@@ -70,6 +70,18 @@ export default function TokenLaunchPage() {
       if (!program) {
         throw new Error("Program not loaded. Please refresh the page.");
       }
+
+      // Check if token with this name already exists for this creator
+      const existingToken = tokenStorage.tokenNameExists(
+        wallet.publicKey.toBase58(),
+        formData.name
+      );
+      if (existingToken) {
+        throw new Error(
+          `Token "${formData.name}" already exists! Mint: ${existingToken.mintAddress.slice(0, 8)}...`
+        );
+      }
+
       // TODO 3: Derive PDAs (curve_config and token_mint)
       const [mintPda] = PublicKey.findProgramAddressSync(
         [
