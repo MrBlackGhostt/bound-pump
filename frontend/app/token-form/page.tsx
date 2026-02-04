@@ -71,12 +71,17 @@ export default function TokenLaunchPage() {
         throw new Error("Program not loaded. Please refresh the page.");
       }
       // TODO 3: Derive PDAs (curve_config and token_mint)
-      const [curveConfigPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("bonding-pump"), wallet.publicKey.toBuffer()],
+      const [mintPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("bonding-pump-mint"),
+          wallet.publicKey.toBuffer(),
+          Buffer.from(formData.name, "utf-8"),
+        ],
         program.programId,
       );
-      const [mintPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("bonding-pump-mint"), wallet.publicKey.toBuffer()],
+
+      const [curveConfigPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("bonding-pump"), mintPda.toBuffer()],
         program.programId,
       );
 

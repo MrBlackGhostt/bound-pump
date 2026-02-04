@@ -1,4 +1,3 @@
-
 {
   "address": "9V7u5GQaQmvE4QuBNXC7ZxLDG8wE9twdegMA5JtXnKGv",
   "metadata": {
@@ -58,7 +57,7 @@
               },
               {
                 "kind": "account",
-                "path": "mint_creator"
+                "path": "mint"
               }
             ]
           }
@@ -93,6 +92,10 @@
               {
                 "kind": "account",
                 "path": "mint_creator"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
               }
             ]
           }
@@ -291,6 +294,10 @@
       ],
       "args": [
         {
+          "name": "_name",
+          "type": "string"
+        },
+        {
           "name": "amount",
           "type": "u64"
         },
@@ -342,7 +349,7 @@
               },
               {
                 "kind": "account",
-                "path": "signer"
+                "path": "token_mint"
               }
             ]
           }
@@ -377,6 +384,10 @@
               {
                 "kind": "account",
                 "path": "signer"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
               }
             ]
           }
@@ -555,7 +566,7 @@
               },
               {
                 "kind": "account",
-                "path": "mint_creator"
+                "path": "mint"
               }
             ]
           }
@@ -590,6 +601,10 @@
               {
                 "kind": "account",
                 "path": "mint_creator"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
               }
             ]
           }
@@ -788,6 +803,10 @@
       ],
       "args": [
         {
+          "name": "_name",
+          "type": "string"
+        },
+        {
           "name": "amount",
           "type": "u64"
         },
@@ -839,7 +858,7 @@
               },
               {
                 "kind": "account",
-                "path": "mint_creator"
+                "path": "mint"
               }
             ]
           }
@@ -874,6 +893,10 @@
               {
                 "kind": "account",
                 "path": "mint_creator"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
               }
             ]
           }
@@ -1070,7 +1093,12 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "_name",
+          "type": "string"
+        }
+      ]
     }
   ],
   "accounts": [

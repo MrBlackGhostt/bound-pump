@@ -10,22 +10,23 @@ export const MPL_TOKEN_METADATA_PROGRAM_ID = new PublicKey(
 
 export function derivePDAs(
   creator: PublicKey,
-  programId: PublicKey
+  programId: PublicKey,
+  tokenName: string
 ): {
   curveConfig: PublicKey;
   mint: PublicKey;
   curveAta: PublicKey;
   metadata: PublicKey;
 } {
-  // Derive curve config PDA
-  const [curveConfig] = PublicKey.findProgramAddressSync(
-    [Buffer.from("bonding-pump"), creator.toBuffer()],
+  // Derive mint PDA FIRST (using creator + name)
+  const [mint] = PublicKey.findProgramAddressSync(
+    [Buffer.from("bonding-pump-mint"), creator.toBuffer(), Buffer.from(tokenName, "utf-8")],
     programId
   );
 
-  // Derive mint PDA
-  const [mint] = PublicKey.findProgramAddressSync(
-    [Buffer.from("bonding-pump-mint"), creator.toBuffer()],
+  // Derive curve config PDA SECOND (using mint address)
+  const [curveConfig] = PublicKey.findProgramAddressSync(
+    [Buffer.from("bonding-pump"), mint.toBuffer()],
     programId
   );
 

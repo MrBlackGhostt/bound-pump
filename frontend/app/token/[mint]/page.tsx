@@ -184,6 +184,7 @@ export default function TokenDetailPage() {
 
       const tx = await program.methods
         .buyToken(
+          token.name, // Pass the token name
           new BN(solInLamports.toString()),
           new BN(minTokenOut.toString())
         )
@@ -267,6 +268,7 @@ export default function TokenDetailPage() {
 
       const tx = await program.methods
         .sellToken(
+          token.name, // Pass the token name
           new BN(Math.floor(tokensInRaw)),
           new BN(minSolOut.toString())
         )
